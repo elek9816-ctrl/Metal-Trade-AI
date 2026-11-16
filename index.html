@@ -119,6 +119,18 @@ td{color:var(--text)}
   table{min-width:500px}
   .table-wrap{overflow-x:auto}
 }
+.analysis-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 15px;
+}
+
+@media (max-width: 650px) {
+  .analysis-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 </style>
 </head>
 
