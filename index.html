@@ -1,0 +1,552 @@
+
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#090b12">
+<title>Metal Trade AI</title>
+
+<style>
+:root {
+  --bg:#090b12;
+  --panel:#111522;
+  --panel2:#171d2d;
+  --border:#252d40;
+  --text:#f1f4fb;
+  --muted:#8b96ad;
+  --red:#ff345b;
+  --blue:#368cff;
+  --green:#20d69a;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:Inter,Arial,sans-serif;
+}
+button,select,input{font:inherit}
+button{cursor:pointer}
+.app{display:flex;min-height:100vh}
+.sidebar{
+  width:235px;background:#0d1019;border-right:1px solid var(--border);
+  padding:24px 16px;display:flex;flex-direction:column;gap:25px;
+}
+.logo{font-size:21px;font-weight:900;letter-spacing:1px}
+.logo span{color:var(--red)}
+.logo small{display:block;color:var(--muted);font-size:10px;letter-spacing:4px;margin-top:5px}
+.nav{display:grid;gap:8px}
+.nav button{
+  border:0;background:transparent;color:var(--muted);
+  padding:13px;border-radius:9px;text-align:left;
+}
+.nav button.active,.nav button:hover{
+  color:white;background:linear-gradient(90deg,#291522,#151d32);
+}
+.status{margin-top:auto;background:var(--panel);padding:14px;border-radius:12px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:7px}
+main{flex:1;min-width:0;padding:28px}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:25px}
+h1{font-size:25px;margin:0}
+.subtitle{color:var(--muted);font-size:13px;margin-top:7px}
+.demo-tag{border:1px solid #694b22;color:#ffc56c;background:#211a12;padding:8px 12px;border-radius:20px;font-size:11px}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.card{
+  background:var(--panel);border:1px solid var(--border);
+  border-radius:14px;padding:18px;min-width:0;
+}
+.metric-label{font-size:12px;color:var(--muted)}
+.metric{font-size:25px;font-weight:800;margin:12px 0 5px}
+.metric-note{font-size:11px;color:var(--muted)}
+.green{color:var(--green)!important}
+.red{color:var(--red)!important}
+.blue{color:var(--blue)!important}
+.section{margin-top:20px}
+.section-title{font-size:16px;font-weight:700;margin:0 0 14px}
+.two-col{display:grid;grid-template-columns:1.6fr 1fr;gap:15px}
+.chart-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+select{
+  background:var(--panel2);color:var(--text);
+  border:1px solid var(--border);padding:9px;border-radius:8px;
+}
+canvas{width:100%;height:260px;display:block;margin-top:12px}
+.bot-card{background:linear-gradient(135deg,#171323,#111b30);border-color:#3b2944}
+.bot-status{font-size:23px;font-weight:800;margin:12px 0}
+.btn{
+  border:0;border-radius:9px;padding:12px 16px;
+  color:white;font-weight:700;background:var(--blue);
+}
+.btn-red{background:var(--red)}
+.btn-muted{background:#283147}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.bot-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:18px}
+.info{font-size:12px;color:var(--muted);line-height:1.7}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{padding:13px 9px;text-align:left;border-bottom:1px solid var(--border)}
+th{color:var(--muted);font-weight:500}
+td{color:var(--text)}
+.asset{font-weight:700}
+.pill{padding:5px 8px;border-radius:6px;font-size:10px;background:#202a3c}
+.settings{display:grid;gap:14px}
+.setting{display:flex;justify-content:space-between;align-items:center;gap:15px}
+.setting label{font-size:13px}
+.setting input{width:95px;background:var(--panel2);border:1px solid var(--border);color:white;padding:9px;border-radius:7px}
+.page{display:none}
+.page.active{display:block}
+.notice{
+  margin-top:18px;padding:13px;border-radius:9px;
+  border:1px solid #604c2c;background:#201b13;color:#e9c58b;
+  font-size:12px;line-height:1.6;
+}
+.mobile-menu{display:none}
+@media(max-width:950px){
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .two-col{grid-template-columns:1fr}
+}
+@media(max-width:650px){
+  .app{display:block}
+  .sidebar{width:100%;padding:14px;display:block;border-right:0;border-bottom:1px solid var(--border)}
+  .logo{font-size:18px}
+  .nav{display:flex;overflow-x:auto;margin-top:14px}
+  .nav button{white-space:nowrap;padding:10px}
+  .status{display:none}
+  main{padding:17px}
+  .topbar{align-items:flex-start}
+  h1{font-size:21px}
+  .grid{gap:9px}
+  .card{padding:13px}
+  .metric{font-size:20px}
+  canvas{height:210px}
+  table{min-width:500px}
+  .table-wrap{overflow-x:auto}
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<aside class="sidebar">
+  <div class="logo">METAL <span>TRADE</span><small>ARTIFICIAL INTELLIGENCE</small></div>
+
+  <nav class="nav">
+    <button class="active" data-page="dashboard">◈ Áttekintés</button>
+    <button data-page="robot">⚙ Robot</button>
+    <button data-page="markets">▥ Piacok</button>
+    <button data-page="history">◷ Előzmények</button>
+    <button data-page="settings">☷ Beállítások</button>
+  </nav>
+
+  <div class="status">
+    <div style="font-size:12px"><span class="dot"></span>Demó üzemmód</div>
+    <div class="info" style="margin-top:8px">A robot jelenleg csak virtuális pénzzel dolgozik.</div>
+  </div>
+</aside>
+
+<main>
+  <header class="topbar">
+    <div>
+      <h1 id="pageTitle">Áttekintés</h1>
+      <div class="subtitle">Metal Trade AI kereskedési központ</div>
+    </div>
+    <div class="demo-tag">● SZIMULÁCIÓ</div>
+  </header>
+
+  <!-- DASHBOARD -->
+  <section class="page active" id="dashboard">
+    <div class="grid">
+      <div class="card">
+        <div class="metric-label">Virtuális egyenleg</div>
+        <div class="metric" id="balance">25,00 €</div>
+        <div class="metric-note">Kezdőtőke: 25,00 €</div>
+      </div>
+      <div class="card">
+        <div class="metric-label">Napi eredmény</div>
+        <div class="metric" id="daily">0,00 €</div>
+        <div class="metric-note">Szimulált nyereség / veszteség</div>
+      </div>
+      <div class="card">
+        <div class="metric-label">Nyitott pozíciók</div>
+        <div class="metric" id="positions">0</div>
+        <div class="metric-note">Virtuális ügyletek</div>
+      </div>
+      <div class="card">
+        <div class="metric-label">Robot állapota</div>
+        <div class="metric blue" id="robotMetric">LEÁLLÍTVA</div>
+        <div class="metric-note">Automatikus demókereskedés</div>
+      </div>
+    </div>
+
+    <div class="two-col section">
+      <div class="card">
+        <div class="chart-head">
+          <div class="section-title">Piaci grafikon</div>
+          <select id="chartAsset">
+            <option value="AAPL">Apple (AAPL)</option>
+            <option value="MSFT">Microsoft (MSFT)</option>
+            <option value="NVDA">NVIDIA (NVDA)</option>
+            <option value="TSLA">Tesla (TSLA)</option>
+          </select>
+        </div>
+        <canvas id="chart"></canvas>
+        <div class="info">Illusztratív, véletlenszerűen generált demóadatok. Nem élő árfolyamok.</div>
+      </div>
+
+      <div class="card bot-card">
+        <div class="metric-label">METAL TRADE AI ROBOT</div>
+        <div class="bot-status" id="botStatus">Készenlét</div>
+        <div class="info">Stratégia: Balanced<br>Elemzési beállítás: 15 perc<br>Virtuális tőke: 25 €</div>
+        <div class="bot-actions">
+          <button class="btn" id="startBtn">Robot indítása</button>
+          <button class="btn btn-red" id="stopBtn" disabled>Leállítás</button>
+        </div>
+        <div class="notice">
+          A demóteszt gyorsított szimulációt használ. A robot nem küld megbízásokat brókerhez.
+        </div>
+      </div>
+    </div>
+
+    <div class="card section">
+      <div class="section-title">Legutóbbi tranzakciók</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Eszköz</th><th>Művelet</th><th>Összeg</th><th>Eredmény</th><th>Időpont</th></tr></thead>
+          <tbody id="recentTrades">
+            <tr><td colspan="5" class="info">Még nincs tranzakció.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ROBOT -->
+  <section class="page" id="robot">
+    <div class="card">
+      <div class="section-title">Robot vezérlőpult</div>
+      <div class="settings">
+        <div class="setting"><label>Robot működése</label><strong id="robotState">Leállítva</strong></div>
+        <div class="setting"><label>Induló virtuális tőke</label><strong>25,00 €</strong></div>
+        <div class="setting"><label>Stratégia</label><strong>Balanced</strong></div>
+        <div class="setting"><label>Elemzési időköz</label><strong>15 perc</strong></div>
+        <div class="setting"><label>Napi veszteséglimit</label><strong class="red">7,00 €</strong></div>
+      </div>
+      <div class="bot-actions">
+        <button class="btn" onclick="startBot()">Robot indítása</button>
+        <button class="btn btn-red" onclick="stopBot()">Robot leállítása</button>
+      </div>
+    </div>
+    <div class="notice">
+      A 7 €-os napi veszteséglimit a virtuális kezdőtőke 28%-a. Ez demóbeállítás, valódi pénznél túl magas kockázatot jelenthet.
+    </div>
+  </section>
+
+  <!-- MARKETS -->
+  <section class="page" id="markets">
+    <div class="card">
+      <div class="section-title">Figyelt részvények</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Részvény</th><th>Demóár</th><th>Változás</th><th>Állapot</th></tr></thead>
+          <tbody id="marketRows"></tbody>
+        </table>
+      </div>
+      <div class="notice">A részvényárak kizárólag bemutató célú, szimulált értékek. Nem alkalmasak befektetési döntésre.</div>
+    </div>
+  </section>
+
+  <!-- HISTORY -->
+  <section class="page" id="history">
+    <div class="card">
+      <div class="section-title">Kereskedési előzmények</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Eszköz</th><th>Művelet</th><th>Összeg</th><th>Eredmény</th><th>Időpont</th></tr></thead>
+          <tbody id="historyRows">
+            <tr><td colspan="5" class="info">Még nincs tranzakció.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section class="page" id="settings">
+    <div class="card">
+      <div class="section-title">Robotbeállítások</div>
+      <div class="settings">
+        <div class="setting">
+          <label>Virtuális kezdőtőke</label>
+          <strong>25,00 €</strong>
+        </div>
+        <div class="setting">
+          <label>Napi veszteséglimit</label>
+          <strong>7,00 €</strong>
+        </div>
+        <div class="setting">
+          <label>Stratégia</label>
+          <strong>Balanced</strong>
+        </div>
+        <div class="setting">
+          <label>Piac</label>
+          <strong>Részvények</strong>
+        </div>
+        <div class="setting">
+          <label>Tőkeáttétel</label>
+          <strong>Kikapcsolva</strong>
+        </div>
+        <div class="setting">
+          <label>Demó automatikus kereskedés</label>
+          <strong class="green">Engedélyezve</strong>
+        </div>
+      </div>
+      <div class="notice">
+        Ezek a beállítások ebben a verzióban előre rögzített demóértékek. Valódi kereskedéshez külön szerveroldali kockázatkezelés szükséges.
+      </div>
+      <div class="bot-actions">
+        <button class="btn btn-muted" id="resetBtn">Demóadatok visszaállítása</button>
+      </div>
+    </div>
+  </section>
+
+  <footer class="info" style="margin-top:25px;text-align:center">
+    METAL TRADE AI © 2026 · DEMO VERSION · Nem befektetési tanácsadás
+  </footer>
+</main>
+</div>
+
+<script>
+const START_BALANCE = 25;
+const DAILY_LIMIT = 7;
+
+let balance = START_BALANCE;
+let dailyResult = 0;
+let running = false;
+let trades = [];
+let timer = null;
+
+const assets = {
+  AAPL:{name:"Apple",price:220},
+  MSFT:{name:"Microsoft",price:490},
+  NVDA:{name:"NVIDIA",price:180},
+  TSLA:{name:"Tesla",price:350}
+};
+
+let prices = {};
+Object.keys(assets).forEach(k=>prices[k]=assets[k].price);
+
+function money(v){
+  return v.toLocaleString("hu-HU",{minimumFractionDigits:2,maximumFractionDigits:2})+" €";
+}
+
+function save(){
+  localStorage.setItem("metalTradeDemo",JSON.stringify({
+    balance,dailyResult,trades,prices
+  }));
+}
+
+function load(){
+  try{
+    const data=JSON.parse(localStorage.getItem("metalTradeDemo"));
+    if(data){
+      balance=data.balance ?? START_BALANCE;
+      dailyResult=data.dailyResult ?? 0;
+      trades=data.trades ?? [];
+      prices={...prices,...data.prices};
+    }
+  }catch(e){}
+}
+
+function updateUI(){
+  document.getElementById("balance").textContent=money(balance);
+  const daily=document.getElementById("daily");
+  daily.textContent=(dailyResult>=0?"+":"")+money(dailyResult);
+  daily.className="metric "+(dailyResult>=0?"green":"red");
+  document.getElementById("positions").textContent="0";
+  document.getElementById("robotMetric").textContent=running?"FUT":"LEÁLLÍTVA";
+  document.getElementById("robotMetric").className="metric "+(running?"green":"blue");
+  document.getElementById("botStatus").textContent=running?"Robot aktív":"Készenlét";
+  document.getElementById("robotState").textContent=running?"Fut":"Leállítva";
+  document.getElementById("startBtn").disabled=running;
+  document.getElementById("stopBtn").disabled=!running;
+  renderTrades();
+  renderMarkets();
+}
+
+function startBot(){
+  if(running)return;
+  if(dailyResult<=-DAILY_LIMIT){
+    alert("A napi veszteséglimit elérve. A robot nem indítható újra.");
+    return;
+  }
+  running=true;
+  updateUI();
+  timer=setInterval(simulateTrade,15000);
+}
+
+function stopBot(){
+  running=false;
+  clearInterval(timer);
+  timer=null;
+  updateUI();
+}
+
+function simulateTrade(){
+  if(!running)return;
+  if(dailyResult<=-DAILY_LIMIT){
+    stopBot();
+    alert("A napi veszteséglimit elérve. A robot leállt.");
+    return;
+  }
+
+  const keys=Object.keys(assets);
+  const symbol=keys[Math.floor(Math.random()*keys.length)];
+  const change=(Math.random()-0.46)*0.5;
+  prices[symbol]=Math.max(1,prices[symbol]*(1+change/100));
+
+  // Szimulált eredmény, nem valós piaci kereskedés.
+  const result=(Math.random()-0.52)*0.55;
+  balance+=result;
+  dailyResult+=result;
+
+  trades.unshift({
+    symbol,
+    action:result>=0?"VÉTEL / NYERESÉG":"ELADÁS / VESZTESÉG",
+    amount:Math.max(1,Math.random()*5),
+    result,
+    time:new Date().toLocaleTimeString("hu-HU")
+  });
+
+  if(trades.length>100)trades.pop();
+
+  if(balance<=0){
+    balance=0;
+    stopBot();
+    alert("A virtuális egyenleg elfogyott. A robot leállt.");
+  }
+
+  save();
+  updateUI();
+  drawChart();
+}
+
+function renderTrades(){
+  const rows=trades.slice(0,8);
+  const html=rows.length?rows.map(t=>`
+    <tr>
+      <td class="asset">${t.symbol}</td>
+      <td>${t.action}</td>
+      <td>${money(t.amount)}</td>
+      <td class="${t.result>=0?"green":"red"}">${t.result>=0?"+":""}${money(t.result)}</td>
+      <td>${t.time}</td>
+    </tr>`).join(""):`<tr><td colspan="5" class="info">Még nincs tranzakció.</td></tr>`;
+
+  document.getElementById("recentTrades").innerHTML=html;
+  document.getElementById("historyRows").innerHTML=trades.length?trades.map(t=>`
+    <tr><td>${t.symbol}</td><td>${t.action}</td><td>${money(t.amount)}</td>
+    <td class="${t.result>=0?"green":"red"}">${t.result>=0?"+":""}${money(t.result)}</td><td>${t.time}</td></tr>
+  `).join(""):`<tr><td colspan="5" class="info">Még nincs tranzakció.</td></tr>`;
+}
+
+function renderMarkets(){
+  document.getElementById("marketRows").innerHTML=Object.keys(assets).map(k=>{
+    const p=prices[k];
+    return `<tr>
+      <td><span class="asset">${k}</span> · ${assets[k].name}</td>
+      <td>${p.toFixed(2)} $</td>
+      <td class="blue">Szimulált adat</td>
+      <td><span class="pill">Figyelés</span></td>
+    </tr>`;
+  }).join("");
+}
+
+let chartValues=Array.from({length:45},(_,i)=>100+Math.sin(i/4)*3+i*.08);
+
+function drawChart(){
+  const canvas=document.getElementById("chart");
+  if(!canvas)return;
+  const rect=canvas.getBoundingClientRect();
+  const ratio=window.devicePixelRatio||1;
+  canvas.width=rect.width*ratio;
+  canvas.height=rect.height*ratio;
+  const ctx=canvas.getContext("2d");
+  ctx.scale(ratio,ratio);
+  const w=rect.width,h=rect.height;
+  ctx.clearRect(0,0,w,h);
+
+  for(let i=0;i<5;i++){
+    const y=20+i*(h-40)/4;
+    ctx.strokeStyle="#252d40";
+    ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();
+  }
+
+  const min=Math.min(...chartValues)-2;
+  const max=Math.max(...chartValues)+2;
+  const points=chartValues.map((v,i)=>({
+    x:i/(chartValues.length-1)*w,
+    y:h-20-(v-min)/(max-min)*(h-40)
+  }));
+
+  ctx.beginPath();
+  points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
+  ctx.strokeStyle="#368cff";
+  ctx.lineWidth=2;
+  ctx.stroke();
+
+  ctx.lineTo(w,h);
+  ctx.lineTo(0,h);
+  ctx.closePath();
+  const grad=ctx.createLinearGradient(0,0,0,h);
+  grad.addColorStop(0,"rgba(54,140,255,.22)");
+  grad.addColorStop(1,"rgba(54,140,255,0)");
+  ctx.fillStyle=grad;
+  ctx.fill();
+}
+
+document.getElementById("chartAsset").addEventListener("change",e=>{
+  const key=e.target.value;
+  chartValues=Array.from({length:45},(_,i)=>prices[key]+Math.sin(i/4)*2+i*.05);
+  drawChart();
+});
+
+document.querySelectorAll(".nav button").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));
+    document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById(btn.dataset.page).classList.add("active");
+    const titles={
+      dashboard:"Áttekintés",
+      robot:"Robot vezérlőpult",
+      markets:"Piacok",
+      history:"Kereskedési előzmények",
+      settings:"Beállítások"
+    };
+    document.getElementById("pageTitle").textContent=titles[btn.dataset.page];
+    if(btn.dataset.page==="dashboard")drawChart();
+  });
+});
+
+document.getElementById("startBtn").addEventListener("click",startBot);
+document.getElementById("stopBtn").addEventListener("click",stopBot);
+
+document.getElementById("resetBtn").addEventListener("click",()=>{
+  if(!confirm("Biztosan visszaállítod az összes demóadatot?"))return;
+  stopBot();
+  balance=START_BALANCE;
+  dailyResult=0;
+  trades=[];
+  prices={};
+  Object.keys(assets).forEach(k=>prices[k]=assets[k].price);
+  save();
+  updateUI();
+  drawChart();
+});
+
+load();
+updateUI();
+drawChart();
+
+window.addEventListener("resize",drawChart);
+</script>
+</body>
+</html>
