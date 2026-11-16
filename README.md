@@ -1,1 +1,1 @@
-# Metal-Trade-AI
+# Meta-Trade-AI
